@@ -9,19 +9,23 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_KEY }}" | base64 -d > ~/.ssh/id_ed25519
+          if echo "${{ secrets.DEPLOY_KEY }}" | base64 -d >/tmp/deploy_key 2>/dev/null; then
+            mv /tmp/deploy_key ~/.ssh/id_ed25519
+          else
+            printf '%s\n' "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          fi
           chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 100.75.67.115 >> ~/.ssh/known_hosts
 
-      - name: Write deploy script
+      - name: Write and transfer deploy script
         env:
           GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: |
-          cat > /tmp/deploy-api.sh << SCRIPT
+          cat > /tmp/deploy-api.sh <<SCRIPT
           #!/bin/bash
-          set -e
-          export GIT_TOKEN="${GIT_TOKEN}"
+          set -euo pipefail
           cd /opt/repos/klotus/landing-page-api
-          git remote set-url origin https://lio.nguyen:\${GIT_TOKEN}@git.liouni.com/klotus/landing-page-api.git
+          git remote set-url origin "https://lio.nguyen:${GIT_TOKEN}@git.liouni.com/klotus/landing-page-api.git"
           git fetch origin
           git checkout master
           git reset --hard origin/master
@@ -36,11 +40,12 @@ jobs:
             sleep 2
           done
           echo "API health check failed"
+          docker logs --tail=100 klotus-landing-page-api || true
           exit 1
           SCRIPT
           chmod +x /tmp/deploy-api.sh
+          scp -i ~/.ssh/id_ed25519 /tmp/deploy-api.sh lio@100.75.67.115:/tmp/deploy-api.sh
 
       - name: Deploy API on Head
         run: |
-          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no /tmp/deploy-api.sh lio@100.75.67.115:/tmp/deploy-api.sh
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no lio@100.75.67.115 'bash /tmp/deploy-api.sh'
+          ssh -i ~/.ssh/id_ed25519 lio@100.75.67.115 'bash /tmp/deploy-api.sh'

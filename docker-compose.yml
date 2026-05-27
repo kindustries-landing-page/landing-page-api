@@ -1,17 +1,15 @@
 services:
-  erp-backend:
+  klotus-landing-page-api:
     build:
-      context: .
+      context: /opt/repos/klotus-split/landing-page-api
       dockerfile: Dockerfile
-    container_name: erp-backend
-    ports:
-      - "10000:10000"
+    container_name: klotus-landing-page-api
     env_file:
-      - .env
+      - /opt/repos/klotus-split/landing-page-api/.env
     restart: always
     networks:
-      - erp-network
+      - npm-network
 
 networks:
-  erp-network:
-    driver: bridge
+  npm-network:
+    external: true
