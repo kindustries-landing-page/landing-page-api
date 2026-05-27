@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   createDirectus,
@@ -13,6 +8,15 @@ import {
   staticToken,
   updateItem,
 } from '@directus/sdk';
+
+type VehicleCreatePayload = {
+  frame_no: string;
+  engine_no: string;
+  vin: string;
+  warranty_status: string;
+  model_code?: string | null;
+  model_name?: string | null;
+};
 import { DIRECTUS_CLIENT } from '../directus/directus.provider';
 import { CheckWarrantyDto } from './dto/check-warranty.dto';
 import { ActivateWarrantyDto } from './dto/activate-warranty.dto';
@@ -66,8 +70,8 @@ export class PublicWarrantyService {
 
   private warrantyDurationMonths(): number {
     const raw = this.configService.get<string>('WARRANTY_DURATION_MONTHS');
-    const parsed = Number(raw ?? '24');
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 24;
+    const parsed = Number(raw ?? '36');
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 36;
   }
 
   private addMonths(date: Date, months: number): Date {
@@ -86,9 +90,23 @@ export class PublicWarrantyService {
     return `WRN-${datePart}-${suffix}`;
   }
 
-  private async findVehicle(client: DirectusClient, dto: CheckWarrantyDto) {
+  private async findVehicle(
+    client: DirectusClient,
+    dto: CheckWarrantyDto,
+    mode: 'frame_and_engine' | 'frame_only' = 'frame_and_engine',
+  ) {
     const frameNo = this.normalize(dto.sokhung);
     const engineNo = this.normalize(dto.somay);
+    const filter =
+      mode === 'frame_only'
+        ? { frame_no: { _eq: frameNo } }
+        : {
+            _and: [
+              { frame_no: { _eq: frameNo } },
+              { engine_no: { _eq: engineNo } },
+            ],
+          };
+
     const rows = await (client as any).request(
       (readItems as any)('klotus_vehicle_registry', {
         fields: [
@@ -101,12 +119,7 @@ export class PublicWarrantyService {
           'warranty_status',
           'delivery_date',
         ],
-        filter: {
-          _and: [
-            { frame_no: { _eq: frameNo } },
-            { engine_no: { _eq: engineNo } },
-          ],
-        },
+        filter,
         limit: 1,
       }),
     );
@@ -134,6 +147,36 @@ export class PublicWarrantyService {
       }),
     );
     return ((rows as WarrantyRow[]) ?? [])[0] ?? null;
+  }
+
+  private async createVehicleIfMissing(
+    client: DirectusClient,
+    dto: ActivateWarrantyDto,
+  ): Promise<VehicleRow> {
+    const frameNo = this.normalize(dto.sokhung);
+    const engineNo = this.normalize(dto.somay);
+    const created = await (client as any).request(
+      (createItem as any)(
+        'klotus_vehicle_registry',
+        {
+          frame_no: frameNo,
+          engine_no: engineNo,
+          vin: frameNo,
+          warranty_status: 'NOT_ACTIVATED',
+        } satisfies VehicleCreatePayload,
+      ),
+    );
+
+    return {
+      id: created.id,
+      frame_no: created.frame_no ?? frameNo,
+      engine_no: created.engine_no ?? engineNo,
+      vin: created.vin ?? frameNo,
+      model_code: created.model_code ?? null,
+      model_name: created.model_name ?? null,
+      warranty_status: created.warranty_status ?? 'NOT_ACTIVATED',
+      delivery_date: created.delivery_date ?? null,
+    };
   }
 
   private async logEvent(
@@ -170,7 +213,12 @@ export class PublicWarrantyService {
     const client = this.getAdminClient();
     const frameNo = this.normalize(dto.sokhung);
     const engineNo = this.normalize(dto.somay);
-    const vehicle = await this.findVehicle(client, dto);
+    let vehicle = await this.findVehicle(client, dto);
+    // Tạm thời không bắt buộc frame + engine phải khớp tuyệt đối ở bước check.
+    // Ưu tiên tìm đúng cặp trước; nếu không có thì fallback theo frame để khách vẫn đi tiếp flow kích hoạt.
+    if (!vehicle) {
+      vehicle = await this.findVehicle(client, dto, 'frame_only');
+    }
     const requestPayload = this.toPayloadRecord(dto);
 
     if (!vehicle) {
@@ -183,9 +231,11 @@ export class PublicWarrantyService {
         ipAddress: meta?.ip,
         userAgent: meta?.userAgent,
       });
-      throw new NotFoundException(
-        'Không tìm thấy xe phù hợp với số khung và số máy',
-      );
+      return {
+        found: false,
+        vehicle: null,
+        active_warranty: null,
+      };
     }
 
     const activeWarranty = await this.findActiveWarranty(client, vehicle.id);
@@ -231,21 +281,14 @@ export class PublicWarrantyService {
     const frameNo = this.normalize(dto.sokhung);
     const engineNo = this.normalize(dto.somay);
     const requestPayload = this.toPayloadRecord(dto);
-    const vehicle = await this.findVehicle(client, dto);
+    let vehicle = await this.findVehicle(client, dto);
 
     if (!vehicle) {
-      await this.logEvent(client, {
-        frameNo,
-        engineNo,
-        requestPayload,
-        result: 'ACTIVATE_ERROR',
-        errorMessage: 'Vehicle not found',
-        ipAddress: meta?.ip,
-        userAgent: meta?.userAgent,
-      });
-      throw new NotFoundException(
-        'Không tìm thấy xe phù hợp với số khung và số máy',
-      );
+      vehicle = await this.findVehicle(client, dto, 'frame_only');
+    }
+
+    if (!vehicle) {
+      vehicle = await this.createVehicleIfMissing(client, dto);
     }
 
     const activeWarranty = await this.findActiveWarranty(client, vehicle.id);
