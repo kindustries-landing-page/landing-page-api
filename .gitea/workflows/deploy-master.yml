@@ -1,7 +1,7 @@
 name: Deploy Klotus Landing Page API Production
 on:
   push:
-    branches: [ master ]
+    branches: [master]
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,37 +15,25 @@ jobs:
             printf '%s\n' "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_ed25519
           fi
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H 100.75.67.115 >> ~/.ssh/known_hosts
-
-      - name: Write and transfer deploy script
-        env:
-          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
-        run: |
-          cat > /tmp/deploy-api.sh <<SCRIPT
-          #!/bin/bash
-          set -euo pipefail
-          cd /opt/repos/klotus/landing-page-api
-          git remote set-url origin "https://lio.nguyen:${GIT_TOKEN}@git.liouni.com/klotus/landing-page-api.git"
-          git fetch origin
-          git checkout master
-          git reset --hard origin/master
-          cd /opt/stacks/klotus-landing-page-api
-          docker compose up -d --build --force-recreate
-          for i in \$(seq 1 30); do
-            code=\$(docker exec klotus-landing-page-api sh -lc "wget -qO- http://127.0.0.1:10000/api/v1 >/dev/null 2>&1; echo \$?" || true)
-            if [ "\$code" = "0" ]; then
-              echo "API health OK"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "API health check failed"
-          docker logs --tail=100 klotus-landing-page-api || true
-          exit 1
-          SCRIPT
-          chmod +x /tmp/deploy-api.sh
-          scp -i ~/.ssh/id_ed25519 /tmp/deploy-api.sh lio@100.75.67.115:/tmp/deploy-api.sh
-
       - name: Deploy API on Head
         run: |
-          ssh -i ~/.ssh/id_ed25519 lio@100.75.67.115 'bash /tmp/deploy-api.sh'
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no lio@100.119.247.85 '
+            set -e
+            cd /opt/repos/klotus/landing-page-api
+            git fetch origin
+            git checkout master
+            git reset --hard origin/master
+            cd /opt/stacks/klotus-landing-page-api
+            docker compose up -d --build
+            for i in $(seq 1 20); do
+              code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:10000/api/v1 || true)
+              if [ "$code" = "200" ]; then
+                echo "API health OK (200)"
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "API health check failed"
+            docker logs --tail=100 klotus-landing-page-api || true
+            exit 1
+          '
