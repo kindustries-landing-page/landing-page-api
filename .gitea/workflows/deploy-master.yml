@@ -24,11 +24,11 @@ jobs:
             git checkout master
             git reset --hard origin/master
             cd /opt/stacks/klotus-landing-page-api
-            docker compose up -d
+            docker compose up -d --force-recreate
+            sleep 5
             for i in $(seq 1 20); do
-              code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:10000/api/v1 || true)
-              if [ "$code" = "200" ]; then
-                echo "API health OK (200)"
+              if docker exec klotus-landing-page-api sh -lc "wget -qO- http://127.0.0.1:10000/api/v1 >/dev/null 2>&1"; then
+                echo "API health OK"
                 exit 0
               fi
               sleep 3
