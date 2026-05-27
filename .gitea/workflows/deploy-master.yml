@@ -16,6 +16,7 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no lio@100.75.67.115 '
             set -e
             cd /opt/repos/klotus/landing-page-api
+            git remote set-url origin https://lio.nguyen:${{ secrets.GIT_TOKEN }}@git.liouni.com/klotus/landing-page-api.git
             git fetch origin
             git checkout master
             git reset --hard origin/master
