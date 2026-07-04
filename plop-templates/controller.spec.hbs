@@ -1,0 +1,36 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { {{pascalCase name}}Controller } from './{{dashCase name}}.controller';
+import { {{pascalCase name}}Service } from './{{dashCase name}}.service';
+
+describe('{{pascalCase name}}Controller', () => {
+  let controller: {{pascalCase name}}Controller;
+  let service: {{pascalCase name}}Service;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [{{pascalCase name}}Controller],
+      providers: [
+        {
+          provide: {{pascalCase name}}Service,
+          useValue: {
+            findAll: jest.fn().mockReturnValue([]),
+          },
+        },
+      ],
+    }).compile();
+
+    controller = module.get<{{pascalCase name}}Controller>({{pascalCase name}}Controller);
+    service = module.get<{{pascalCase name}}Service>({{pascalCase name}}Service);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('findAll', () => {
+    it('should return an array', () => {
+      expect(controller.findAll()).toEqual([]);
+      expect(service.findAll).toHaveBeenCalled();
+    });
+  });
+});

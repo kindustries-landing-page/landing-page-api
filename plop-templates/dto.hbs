@@ -1,0 +1,10 @@
+import { IsOptional, IsString } from 'class-validator';
+
+export class {{pascalCase name}}Dto {
+  @IsString()
+  example!: string;
+
+  @IsOptional()
+  @IsString()
+  optional?: string;
+}

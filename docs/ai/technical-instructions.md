@@ -1,87 +1,103 @@
-# Technical Instructions (Canonical) — Liouni ERP API
+# Technical Instructions — Klotus Landing Page API
 
 Status: Active
-Scope: Áp dụng cho mọi AI agent/model làm việc trong repo backend API.
+Scope: Áp dụng cho mọi AI agent/model làm việc trong repo này.
 
 ## 1) Source of truth và thứ tự đọc
-Khi bắt đầu task:
-1. `AGENTS.md`
-2. `docs/ai/technical-instructions.md` (file này)
-3. `README.md`
-4. Task file trong `docs/tasks/`
 
-## 2) Universal DB-first policy (FEATURE / ENHANCE / FIX)
-Áp dụng cho mọi thay đổi API, kể cả enhancement và bugfix.
+1. `AGENTS.md` (entrypoint)
+2. `README.md` (overview + endpoints)
+3. `.kiro/steering/project-context.md` (architecture details)
+4. File này (workflow rules)
 
-### Gate 0 — DB Precheck bắt buộc
-Trước khi sửa workflow/API, phải ghi rõ DB precheck trong task:
-- Collections/fields liên quan
-- Data nền cần có
-- Constraint/index/default cần có
-- Kết quả: `DB_READY` hoặc `DB_GAP_FOUND`
+## 2) Project identity
 
-Nếu `DB_GAP_FOUND`: tạo/hoàn tất DB task trước, sau đó mới xử lý API.
+- **Repo**: `klotus/landing-page-api`
+- **Purpose**: Public API cho landing page (warranty check/activate)
+- **Framework**: NestJS 11 + TypeScript
+- **Auth**: KHÔNG CÓ — tất cả endpoints public
+- **Directus prefix**: `klotus_` (KHÔNG phải `gw_`)
+- **Tooling**: Bun-first
 
-### Gate order bắt buộc
-1. DB / Directus staging
-2. Backend workflow/API
-3. UI
+## 3) Mandatory workflow
 
-## 3) Non-negotiable workflow
-### 3.1 No code without task
-- Không bắt đầu sửa code nếu chưa có task file trong `docs/tasks/`.
-- Task phải có checklist sub-task rõ ràng.
+### 3.1 Bun-first tooling
+Mọi install/build/test/lint/format dùng `bun` / `bunx`.
+Chỉ fallback `npm`/`npx` nếu Bun không hỗ trợ (phải ghi rõ lý do).
 
-### 3.2 Tick done realtime
-- Mỗi sub-task xong phải tick ngay `- [ ]` -> `- [x]`.
+### 3.2 Test coverage bắt buộc
+- Mỗi controller → `*.controller.spec.ts`
+- Mỗi service → `*.service.spec.ts`
+- Mỗi DTO → `*.dto.spec.ts`
+- **If a test fails, fix the SOURCE CODE — NOT the test.**
 
-### 3.3 Lessons learned khi có issue
-- Nếu phát sinh lỗi/blocker/sai hướng triển khai, phải ghi lessons learned trước khi đóng task.
-- Dùng template `docs/lessons-learned/_template.md`.
+### 3.3 Code generation
+Khi tạo module mới, dùng Plop:
+```bash
+bun run generate
+```
+Sau đó register module trong `app.module.ts`.
 
-### 3.4 Task closing rule
-- Hoàn tất task phải commit + push code web/api liên quan.
-- Riêng DB/directus staging không bắt buộc commit/push code DB repo; bắt buộc có evidence apply + verify + documentation.
+### 3.4 Verify trước khi báo hoàn tất
+```bash
+bun run check    # tsc + eslint + prettier
+bun run test     # jest
+```
 
-## 4) API architecture rules
+## 4) Architecture rules
+
 ### 4.1 Module boundaries
-- Tổ chức theo Nest module/domain dưới `src/`.
-- Không trộn controller/service/dto của domain khác nếu không cần thiết.
+- Mỗi domain là self-contained module (controller + service + DTOs + specs)
+- Không trộn logic giữa các domain modules
+- Shared code → tạo module riêng hoặc dùng `directus/` module
 
-### 4.2 Directus integration discipline
-- Mọi thay đổi schema/collection naming phải kiểm tra tương thích với Directus staging.
-- Khi đổi contract liên quan Directus, phải đồng bộ với ERP Web nếu có ảnh hưởng response DTO.
+### 4.2 Directus integration
+- Dùng admin staticToken (không có user-scoped client)
+- Collections prefix: `klotus_`
+- Mọi Directus call phải có error handling
 
-### 4.3 Validation & DTO
-- Input/params/query phải đi qua DTO + validator.
-- Không bypass validation cho endpoint public hoặc endpoint nghiệp vụ chính.
+### 4.3 DTO & Validation
+- Mọi input phải qua DTO + class-validator
+- ValidationPipe global: `whitelist: true, forbidNonWhitelisted: true, transform: true`
+- Không bypass validation
 
-### 4.4 Reuse-first
-Trước khi tạo mới utility/service/helper, rà soát:
-- `src/common/**`
-- `src/directus/**`
-- module hiện có theo domain
+### 4.4 Health checks
+- Khi thêm external dependency mới, tạo custom HealthIndicator
+- Register trong `src/health/health.module.ts`
+- Thêm vào health controller check array
 
-## 5) Data-safety rules (Directus staging aware)
-- Không viết migration phá huỷ dữ liệu khi chưa có backup.
-- Không đổi schema staging mà không ghi rõ migration note + verification.
-- Không in secret từ `.env` ra log/report.
+## 5) Testing patterns
 
-## 6) Validation gates
-- Bun-first tooling: dùng `bun` / `bunx` mặc định cho install/build/test/lint/format; chỉ fallback `npm`/`npx` nếu đã verify Bun không hỗ trợ và phải ghi rõ trong task evidence.
-- `bun run build`
-- Nếu có test: chạy test scope liên quan.
-- Nếu có đổi contract: kiểm tra endpoint affected bằng smoke request.
+### Controller test
+Mock service, verify:
+- Đúng method được gọi
+- Đúng params được truyền
+- Response được forward đúng
+
+### Service test
+Mock Directus client `{ request: jest.fn() }`, verify:
+- Business logic đúng
+- Error handling đúng
+- Directus calls đúng thứ tự
+
+### DTO test
+Dùng `validate()` + `plainToInstance()`, verify:
+- Valid data passes
+- Missing required fields fail
+- Invalid types fail
+- MinLength/MaxLength constraints work
+
+## 6) Validation gates (CI)
+
+```bash
+bun run check    # MUST pass: tsc + eslint + prettier
+bun run test     # MUST pass: all specs green
+bun run build    # MUST pass: nest build
+```
 
 ## 7) Output contract khi báo hoàn tất
-Phải kèm:
-1. File đã đổi
-2. Checklist đã tick
-3. DB precheck result + gate evidence
-4. Lessons learned entry (nếu có issue)
-5. Kết quả build/test/smoke check
-6. Trạng thái commit/push cho web/api
 
-## 8) Templates liên quan
-- Task template: `docs/tasks/_template.md`
-- Lessons template: `docs/lessons-learned/_template.md`
+1. Files đã thay đổi/tạo mới
+2. Test results (pass/fail count)
+3. Build verification result
+4. Nếu có issue → ghi lessons learned

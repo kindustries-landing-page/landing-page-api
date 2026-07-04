@@ -63,7 +63,7 @@ describe('PublicWarrantyService', () => {
       somay: 'engine-001',
     });
 
-    expect(result.vehicle.frame_no).toBe('FRAME-001');
+    expect(result.vehicle!.frame_no).toBe('FRAME-001');
     expect(result.active_warranty?.warranty_code).toBe('WRN-1');
     expect(request).toHaveBeenCalledTimes(3);
   });

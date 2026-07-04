@@ -1,16 +1,32 @@
-# Docs Index — Liouni ERP API
+# Docs Index — Klotus Landing Page API
 
 ## Start here
-1. `../AGENTS.md`
-2. `ai/technical-instructions.md`
-3. `tasks/README.md`
+
+1. `../AGENTS.md` — Agent entrypoint
+2. `ai/technical-instructions.md` — Workflow rules
+3. `../README.md` — Project overview
 
 ## Sections
-- `ai/` — canonical rules + changelog
-- `tasks/` — task tracking and checklist flow
-- `lessons-learned/` — issue log + preventive actions
 
-## Mandatory workflow summary
-- No code without task file.
-- Tick checklist realtime.
-- If issue happens, record lessons learned before closing task.
+- `ai/` — Technical instructions + changelog cho agents
+- `guidelines/` — PRD & task generation guides
+- `lessons-learned/` — Issue log + preventive actions
+- `tasks/` — Task tracking
+- `system/` — System documentation
+
+## Steering files (for Kiro)
+
+- `.kiro/steering/project-context.md` — Auto-included project context
+- `.kiro/steering/module-patterns.md` — Module/service/test patterns (included when editing src/)
+- `.kiro/steering/directus-integration.md` — Directus SDK usage (included when editing services)
+
+## Quick reference
+
+| What | Where |
+|------|-------|
+| API endpoints | `../README.md` |
+| Architecture | `.kiro/steering/project-context.md` |
+| Module patterns | `.kiro/steering/module-patterns.md` |
+| Directus usage | `.kiro/steering/directus-integration.md` |
+| Code generation | `bun run generate` (Plop) |
+| Testing | `bun run test` |

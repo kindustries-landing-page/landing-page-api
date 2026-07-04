@@ -1,0 +1,19 @@
+import { {{pascalCase name}}Service } from './{{dashCase name}}.service';
+
+describe('{{pascalCase name}}Service', () => {
+  let service: {{pascalCase name}}Service;
+
+  beforeEach(() => {
+    service = new {{pascalCase name}}Service();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('findAll', () => {
+    it('should return an array', () => {
+      expect(service.findAll()).toEqual([]);
+    });
+  });
+});
