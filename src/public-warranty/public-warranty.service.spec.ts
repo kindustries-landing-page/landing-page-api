@@ -104,7 +104,10 @@ describe('PublicWarrantyService', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce({ id: 'log-1' });
 
-    const result = await service.check({ sokhung: 'missing', somay: 'missing' });
+    const result = await service.check({
+      sokhung: 'missing',
+      somay: 'missing',
+    });
 
     expect(result).toEqual({
       found: false,
@@ -119,7 +122,13 @@ describe('PublicWarrantyService', () => {
     request
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce({ id: 'vehicle-new', frame_no: 'FRAME-NEW', engine_no: 'ENGINE-NEW', vin: 'FRAME-NEW', warranty_status: 'NOT_ACTIVATED' })
+      .mockResolvedValueOnce({
+        id: 'vehicle-new',
+        frame_no: 'FRAME-NEW',
+        engine_no: 'ENGINE-NEW',
+        vin: 'FRAME-NEW',
+        warranty_status: 'NOT_ACTIVATED',
+      })
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce({
         id: 'activation-1',

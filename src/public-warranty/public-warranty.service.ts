@@ -156,15 +156,12 @@ export class PublicWarrantyService {
     const frameNo = this.normalize(dto.sokhung);
     const engineNo = this.normalize(dto.somay);
     const created = await (client as any).request(
-      (createItem as any)(
-        'klotus_vehicle_registry',
-        {
-          frame_no: frameNo,
-          engine_no: engineNo,
-          vin: frameNo,
-          warranty_status: 'NOT_ACTIVATED',
-        } satisfies VehicleCreatePayload,
-      ),
+      (createItem as any)('klotus_vehicle_registry', {
+        frame_no: frameNo,
+        engine_no: engineNo,
+        vin: frameNo,
+        warranty_status: 'NOT_ACTIVATED',
+      } satisfies VehicleCreatePayload),
     );
 
     return {

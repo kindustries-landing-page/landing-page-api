@@ -16,8 +16,6 @@ export class HealthController {
   @Get()
   @HealthCheck()
   check(): Promise<HealthCheckResult> {
-    return this.health.check([
-      () => this.directus.isHealthy('directus'),
-    ]);
+    return this.health.check([() => this.directus.isHealthy('directus')]);
   }
 }

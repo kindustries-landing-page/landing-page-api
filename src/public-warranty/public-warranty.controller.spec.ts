@@ -14,14 +14,10 @@ describe('PublicWarrantyController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PublicWarrantyController],
-      providers: [
-        { provide: PublicWarrantyService, useValue: mockService },
-      ],
+      providers: [{ provide: PublicWarrantyService, useValue: mockService }],
     }).compile();
 
-    controller = module.get<PublicWarrantyController>(
-      PublicWarrantyController,
-    );
+    controller = module.get<PublicWarrantyController>(PublicWarrantyController);
     service = module.get(PublicWarrantyService);
     jest.clearAllMocks();
   });
@@ -50,7 +46,11 @@ describe('PublicWarrantyController', () => {
     });
 
     it('should pass undefined userAgent when header is missing', async () => {
-      mockService.check.mockResolvedValue({ found: false, vehicle: null, active_warranty: null });
+      mockService.check.mockResolvedValue({
+        found: false,
+        vehicle: null,
+        active_warranty: null,
+      });
 
       await controller.check(dto, ip, undefined);
 
@@ -102,9 +102,9 @@ describe('PublicWarrantyController', () => {
         new Error('Xe này đã được kích hoạt bảo hành'),
       );
 
-      await expect(
-        controller.activate(dto, ip, userAgent),
-      ).rejects.toThrow('Xe này đã được kích hoạt bảo hành');
+      await expect(controller.activate(dto, ip, userAgent)).rejects.toThrow(
+        'Xe này đã được kích hoạt bảo hành',
+      );
     });
   });
 });
