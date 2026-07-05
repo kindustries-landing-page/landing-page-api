@@ -106,7 +106,7 @@ jobs:
             ${{ vars.HEAD_USER }}@${{ vars.HEAD_HOST }} \
             '
               for i in $(seq 1 20); do
-                code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:10022/health || true)
+                code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:10022/api/v1/health || true)
                 if [ "$code" = "200" ]; then
                   echo "✅ API health OK"
                   docker image prune -af
