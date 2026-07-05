@@ -12,14 +12,11 @@ File này là entrypoint cho mọi AI agent/model làm việc trong repo `landin
 
 Đây là **public-facing API** cho landing page Klotus — KHÔNG phải ERP API.
 - Không có auth guard (public endpoints)
-- Không có user-scoped Directus client
-- Dùng admin staticToken cho mọi Directus call
-- Directus collections dùng prefix `klotus_` (không phải `gw_`)
+- Giao tiếp với ERP API qua các endpoints `/public-warranty`
 
 ## Tech stack
 
 - NestJS 11 + TypeScript 5
-- @directus/sdk (REST client, admin staticToken)
 - @nestjs/terminus (health checks)
 - class-validator + class-transformer (DTO validation)
 - @nestjs/swagger (API docs tại `/api/docs`)
@@ -34,15 +31,10 @@ src/
 ├── app.module.ts              # Root module
 ├── app.controller.ts          # GET / (hello)
 ├── app.service.ts
-├── directus/
-│   ├── directus.module.ts     # @Global() — exports DIRECTUS_CLIENT
-│   └── directus.provider.ts   # createDirectus + staticToken + rest
 ├── health/
 │   ├── health.module.ts       # TerminusModule integration
 │   ├── health.controller.ts   # GET /health
-│   ├── directus.health.ts     # Custom HealthIndicator (ping Directus)
-│   ├── health.controller.spec.ts
-│   └── directus.health.spec.ts
+│   └── health.controller.spec.ts
 └── public-warranty/
     ├── public-warranty.module.ts
     ├── public-warranty.controller.ts
@@ -86,7 +78,7 @@ Templates nằm trong `plop-templates/`.
 - Run tests: `bun run test` (all) hoặc `bunx jest --testPathPattern=<pattern>` (specific).
 - Test pattern:
   - Controller tests: mock service, verify delegation + params passing.
-  - Service tests: mock Directus client (`{ request: jest.fn() }`), verify business logic.
+  - Service tests: mock ERP API client or external dependencies, verify business logic.
   - DTO tests: dùng `class-validator` validate() trực tiếp.
 
 ## Module creation checklist
@@ -103,21 +95,17 @@ Khi tạo module mới:
 - Global prefix: `/api/v1/`
 - Public endpoints: không cần auth
 - ValidationPipe global: `whitelist: true, forbidNonWhitelisted: true, transform: true`
-- Health endpoint: `GET /api/v1/health` (Terminus, check Directus connectivity)
+- Health endpoint: `GET /api/v1/health` (Terminus)
 
-## Directus integration
 
-- Admin client injected globally via `DIRECTUS_CLIENT` token
-- Collections prefix: `klotus_` (e.g. `klotus_vehicle_registry`, `klotus_warranty_activations`)
-- Không dùng user-scoped client (API này public, không có user auth)
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `PORT` | No | Server port (default 3000) |
-| `DIRECTUS_URL` | Yes | Directus instance URL |
-| `DIRECTUS_ADMIN_TOKEN` | Yes | Admin static token |
+| `ERP_API_URL` | Yes | ERP API URL |
+| `ERP_API_KEY` | Yes | ERP API Key |
 | `WARRANTY_DURATION_MONTHS` | No | Warranty duration (default 36) |
 
 ## Mandatory execution contract

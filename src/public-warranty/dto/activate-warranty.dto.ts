@@ -3,11 +3,11 @@ import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 export class ActivateWarrantyDto {
   @IsString()
   @MinLength(3)
-  sokhung!: string;
+  vin_no!: string;
 
   @IsString()
   @MinLength(3)
-  somay!: string;
+  engine_no!: string;
 
   @IsString()
   @IsNotEmpty()

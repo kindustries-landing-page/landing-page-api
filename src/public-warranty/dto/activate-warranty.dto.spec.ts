@@ -9,8 +9,8 @@ describe('ActivateWarrantyDto', () => {
 
   it('should pass with required fields only', async () => {
     const dto = createDto({
-      sokhung: 'FRAME-001',
-      somay: 'ENGINE-001',
+      vin_no: 'FRAME-001',
+      engine_no: 'ENGINE-001',
       customer_name: 'Nguyen Van A',
       customer_phone: '0901234567',
       customer_address: 'Hanoi',
@@ -23,8 +23,8 @@ describe('ActivateWarrantyDto', () => {
 
   it('should pass with all fields', async () => {
     const dto = createDto({
-      sokhung: 'FRAME-001',
-      somay: 'ENGINE-001',
+      vin_no: 'FRAME-001',
+      engine_no: 'ENGINE-001',
       customer_name: 'Nguyen Van A',
       customer_phone: '0901234567',
       customer_address: 'Hanoi',
@@ -36,38 +36,38 @@ describe('ActivateWarrantyDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('should fail when sokhung is missing', async () => {
-    const dto = createDto({ somay: 'ENGINE-001' });
+  it('should fail when vin_no is missing', async () => {
+    const dto = createDto({ engine_no: 'ENGINE-001' });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('sokhung');
+    expect(errors[0].property).toBe('vin_no');
   });
 
-  it('should fail when somay is missing', async () => {
-    const dto = createDto({ sokhung: 'FRAME-001' });
+  it('should fail when engine_no is missing', async () => {
+    const dto = createDto({ vin_no: 'FRAME-001' });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('somay');
+    expect(errors[0].property).toBe('engine_no');
   });
 
-  it('should fail when sokhung is too short', async () => {
-    const dto = createDto({ sokhung: 'AB', somay: 'ENGINE-001' });
+  it('should fail when vin_no is too short', async () => {
+    const dto = createDto({ vin_no: 'AB', engine_no: 'ENGINE-001' });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('sokhung');
+    expect(errors[0].property).toBe('vin_no');
   });
 
-  it('should fail when somay is too short', async () => {
-    const dto = createDto({ sokhung: 'FRAME-001', somay: 'XY' });
+  it('should fail when engine_no is too short', async () => {
+    const dto = createDto({ vin_no: 'FRAME-001', engine_no: 'XY' });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('somay');
+    expect(errors[0].property).toBe('engine_no');
   });
 
   it('should allow optional fields to be undefined', async () => {
     const dto = createDto({
-      sokhung: 'FRAME-001',
-      somay: 'ENGINE-001',
+      vin_no: 'FRAME-001',
+      engine_no: 'ENGINE-001',
       customer_name: 'Nguyen Van A',
       customer_phone: '0901234567',
       customer_address: 'Hanoi',
@@ -81,8 +81,8 @@ describe('ActivateWarrantyDto', () => {
 
   it('should fail when customer_name is not a string', async () => {
     const dto = createDto({
-      sokhung: 'FRAME-001',
-      somay: 'ENGINE-001',
+      vin_no: 'FRAME-001',
+      engine_no: 'ENGINE-001',
       customer_name: 123 as any,
     });
     const errors = await validate(dto);
