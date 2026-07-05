@@ -8,7 +8,15 @@ describe('ActivateWarrantyDto', () => {
   }
 
   it('should pass with required fields only', async () => {
-    const dto = createDto({ sokhung: 'FRAME-001', somay: 'ENGINE-001' });
+    const dto = createDto({
+      sokhung: 'FRAME-001',
+      somay: 'ENGINE-001',
+      customer_name: 'Nguyen Van A',
+      customer_phone: '0901234567',
+      customer_address: 'Hanoi',
+      dealer_id: 'DL01',
+      dealer_name: 'Dealer 1',
+    });
     const errors = await validate(dto);
     expect(errors).toHaveLength(0);
   });
@@ -19,6 +27,9 @@ describe('ActivateWarrantyDto', () => {
       somay: 'ENGINE-001',
       customer_name: 'Nguyen Van A',
       customer_phone: '0901234567',
+      customer_address: 'Hanoi',
+      dealer_id: 'DL01',
+      dealer_name: 'Dealer 1',
       notes: 'Test note',
     });
     const errors = await validate(dto);
@@ -57,8 +68,11 @@ describe('ActivateWarrantyDto', () => {
     const dto = createDto({
       sokhung: 'FRAME-001',
       somay: 'ENGINE-001',
-      customer_name: undefined,
-      customer_phone: undefined,
+      customer_name: 'Nguyen Van A',
+      customer_phone: '0901234567',
+      customer_address: 'Hanoi',
+      dealer_id: 'DL01',
+      dealer_name: 'Dealer 1',
       notes: undefined,
     });
     const errors = await validate(dto);
