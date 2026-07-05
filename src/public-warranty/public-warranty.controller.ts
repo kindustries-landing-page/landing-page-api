@@ -11,13 +11,13 @@ import { PublicWarrantyService } from './public-warranty.service';
 import { CheckWarrantyDto } from './dto/check-warranty.dto';
 import { ActivateWarrantyDto } from './dto/activate-warranty.dto';
 
-@Controller('public/warranty')
+@Controller('public-warranty')
 export class PublicWarrantyController {
   constructor(private readonly publicWarrantyService: PublicWarrantyService) {}
 
-  @Get('check')
+  @Post('check')
   check(
-    @Query() dto: CheckWarrantyDto,
+    @Body() dto: CheckWarrantyDto,
     @Ip() ip: string,
     @Headers('user-agent') userAgent?: string,
   ) {

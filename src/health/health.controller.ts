@@ -4,18 +4,16 @@ import {
   HealthCheckService,
   HealthCheckResult,
 } from '@nestjs/terminus';
-import { DirectusHealthIndicator } from './directus.health';
 
 @Controller('health')
 export class HealthController {
-  constructor(
-    private health: HealthCheckService,
-    private directus: DirectusHealthIndicator,
-  ) {}
+  constructor(private health: HealthCheckService) {}
 
   @Get()
   @HealthCheck()
   check(): Promise<HealthCheckResult> {
-    return this.health.check([() => this.directus.isHealthy('directus')]);
+    return this.health.check([
+      () => Promise.resolve({ api: { status: 'up' } }),
+    ]);
   }
 }

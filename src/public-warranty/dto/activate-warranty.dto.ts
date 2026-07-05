@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class ActivateWarrantyDto {
   @IsString()
@@ -9,13 +9,33 @@ export class ActivateWarrantyDto {
   @MinLength(3)
   somay!: string;
 
-  @IsOptional()
   @IsString()
-  customer_name?: string;
+  @IsNotEmpty()
+  dealer_id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  dealer_name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  customer_name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  customer_phone!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  customer_address!: string;
 
   @IsOptional()
   @IsString()
-  customer_phone?: string;
+  customer_dob?: string;
+
+  @IsOptional()
+  @IsString()
+  customer_email?: string;
 
   @IsOptional()
   @IsString()
