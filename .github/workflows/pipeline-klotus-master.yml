@@ -81,10 +81,14 @@ jobs:
             server_name: elite
             ip: 100.75.67.115
             port: 10022
+          - host: dev
+            server_name: dev
+            ip: 100.90.103.19
+            port: 10022
     env:
       KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
       KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
-      KOMODO_URL: ${{ vars.KOMODO_URL }}
+      KOMODO_URL: ${{ vars.KOMODO_URL || secrets.KOMODO_URL || 'http://100.75.67.115:9120' }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
