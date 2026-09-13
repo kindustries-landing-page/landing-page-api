@@ -138,7 +138,7 @@ jobs:
           echo "Resolved Server $SERVER_NAME -> $server_id"
 
           # 2. Compose contents from template
-          api_compose="$(sed -e "s/__TARGET_IP__/$TARGET_IP/g" -e "s/__TARGET_PORT__/$TARGET_PORT/g" .github/compose/api.compose.yaml)"
+          api_compose="$(sed -e "s/__TARGET_IP__/$TARGET_IP/g" -e "s/__TARGET_PORT__/$TARGET_PORT/g" -e "s/__TARGET_HOST__/$TARGET_HOST/g" .github/compose/api.compose.yaml)"
 
           ensure_stack() {
             local sname="$1"
