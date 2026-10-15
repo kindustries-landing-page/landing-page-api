@@ -46,7 +46,7 @@ bun run start:dev
 | `bun run build` | Compile TypeScript |
 | `bun run start:dev` | Dev server (watch) |
 | `bun run start:prod` | Production server |
-| `bun run check` | tsc + eslint + prettier (CI gate) |
+| `bun run check:ci` | tsc + eslint + prettier (CI gate) |
 | `bun run test` | Run all unit tests |
 | `bun run generate` | Plop — scaffold module/dto |
 
