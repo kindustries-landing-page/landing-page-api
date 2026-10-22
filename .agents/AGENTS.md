@@ -49,7 +49,7 @@ Source of truth for this repository (`./landing-page-api`).
 - Remote: **`github-industries`**
 - Repo role:
   - Public-facing API for Klotus warranty check/activation
-  - Proxy/Integrator with Liouni ERP API
+  - Proxy/Integrator with ERP API
   - Health check & Swagger API docs (`/api/docs`)
 
 ---

@@ -7,9 +7,9 @@
 
 # Multi-Family Workspace Router
 
-**ROUTING & RULES ONLY:** This is the single source of truth for this multi-family workspace (Liouni ERP + Klotus). Application-specific implementation rules live in each family or repo router, not here.
+**ROUTING & RULES ONLY:** This is the single source of truth for this multi-family workspace (ERP + Klotus). Application-specific implementation rules live in each family or repo router, not here.
 
-This workspace contains two independent application families: Liouni ERP (multi-module backend) and Klotus (public warranty & landing page).
+This workspace contains two independent application families: ERP (multi-module backend) and Klotus (public warranty & landing page).
 
 ---
 
@@ -48,19 +48,18 @@ Mandatory reading order when working on a specific family:
 - **Remote**: Always push to `github-industries`.
 
 ### Database & Environment
-- **By Default**: Dùng `DATABASE_URL` trong `.env` (DB `erp_local` trên `db-dev.liouni.com:5433`) làm DB master. Tenant khác dùng file `.env.<tenant>-<stage>` tương ứng với nhánh deploy (`greenway-production`, `greenway-staging`, `klotus-production`, `klotus-staging`). Không có biến `ERP_MASTER_DATABASE_URL`; `.env` trần có thể đang trỏ DB production nên luôn kiểm tra `DATABASE_URL` trước khi chạy script, và script phải nhận file env tường minh.
+- **By Default**: Dùng `DATABASE_URL` trong `.env` làm DB master (luôn đọc `.env` để xác nhận DB thực tế). Tenant khác dùng file `.env.<tenant>-<stage>` tương ứng với nhánh deploy (`greenway-production`, `greenway-staging`, `klotus-production`, `klotus-staging`). Không có biến `ERP_MASTER_DATABASE_URL`; `.env` trần có thể đang trỏ DB production nên luôn kiểm tra `DATABASE_URL` trước khi chạy script, và script phải nhận file env tường minh.
 - **Xác nhận DB**: trước khi quét hoặc ghi DB, chạy `SELECT current_database();` để biết DB thực tế, báo anh tên DB trước khi ghi; không suy ra DB từ tên file.
 - **Context Isolation**: Do NOT mix databases, `.env`, or schema between ERP and Klotus.
 - **Verify Runtime**: Read the actual `.env` before making changes (no outdated assumptions).
 
 ### Pre-Commit/Push Checklist
-Before committing or pushing, run in order:
+After committing and rebasing, run the Final Gate once on the final commit:
 ```bash
-bun run build
-bun run check:ci
-bun run test  # or: bunx jest --forceExit (for API)
 git commit
-git push github-industries [target-branch]
+git pull --rebase github-industries [target-branch]
+bun run verify:final
+git push github-industries [target-branch] --no-verify
 ```
 
 ---
@@ -78,6 +77,7 @@ Global workflows in `./.agents/workflows/`:
 - `erp-git-workflow.md` — ERP master-first Git workflow.
 - `erp-web-v2-refactor.md` — ERP Web v2 migration workflow.
 - `api-service-refactor.md` — ERP API service/controller refactoring.
+- `api-v2-refactor.md` — ERP API v2 module architecture (plop `api-module-v2`, Facade + sub-services + spec).
 - `standardize-table.md` — ERP table standardization.
 - `ui-atomic-refactor.md` — UI atomic refactoring.
 
@@ -108,8 +108,8 @@ Repo-level workflows (e.g. `erp/erp-web/.agents/workflows/standardize-drawer.md`
 ### Scenario 2: Committing & Pushing Code (ERP)
 1. Load `/erp-git-workflow` workflow.
 2. Ensure you're on `erp-master`.
-3. Run the pre-push checklist (build, check:ci, test), then `git commit` and `git push github-industries erp-master`.
-4. If conflict: `git pull --rebase github-industries erp-master`.
+3. Commit with the fast pre-commit hook, then `git pull --rebase github-industries erp-master`.
+4. Run `bun run verify:final` once on the clean final commit, then push with `--no-verify`.
 
 ### Scenario 3: Building a Data Table (ERP Web)
 1. Load `/standardize-table` workflow.
@@ -174,7 +174,7 @@ Repo-level workflows (e.g. `erp/erp-web/.agents/workflows/standardize-drawer.md`
 - ❌ Don't leave ad-hoc `.ts` files at repo root (breaks `dist/` output structure)
 - ❌ Don't reference outdated docs (always verify with actual code state)
 - ❌ Don't mix database schemas, `.env`, or domain models between ERP and Klotus
-- ❌ Don't commit code without running the pre-push checklist (build, check:ci, test)
+- ❌ Don't commit/push code without a passing `verify:final` on the final commit
 
 ---
 
@@ -209,7 +209,7 @@ Skills và task artifacts nằm trong `./landing-page-api/.agents` và `./landin
 
 1. **NO ROOT PUSHING**: Cấm chạy `git add`, `git commit`, `git push` từ `./klotus` hoặc workspace root. Luôn `cd` vào `./landing-page-api` hoặc `./landing-page-web`.
 2. **Klotus Scope**: Public Warranty & Landing page funnel. Mọi collection/entity phải dùng prefix `klotus_*` (không dùng `gw_*` hay `erp_*`).
-3. **Ecosystem Isolation**: Klotus là family tách biệt với Liouni ERP. Funnel bảo hành công khai gọi ERP API qua contract `/public-warranty`. Không trộn database, `.env`, hay domain model với ERP.
+3. **Ecosystem Isolation**: Klotus là family tách biệt với ERP. Funnel bảo hành công khai gọi ERP API qua contract `/public-warranty`. Không trộn database, `.env`, hay domain model với ERP.
 4. **Branch**: Làm việc trên `master`. Remote là `github-industries` (fallback `origin` nếu thiếu).
 5. **Tooling**: Chỉ dùng `bun` / `bunx`. Không dùng `npm` hay `yarn`.
 6. **Local Testing Only**: Không build hay chạy container deploy thủ công. Dev local chạy `bun run start:dev` / `bun run dev`.
@@ -279,7 +279,7 @@ Source of truth for this repository (`./landing-page-api`).
 - Remote: **`github-industries`**
 - Repo role:
   - Public-facing API for Klotus warranty check/activation
-  - Proxy/Integrator with Liouni ERP API
+  - Proxy/Integrator with ERP API
   - Health check & Swagger API docs (`/api/docs`)
 
 ---
