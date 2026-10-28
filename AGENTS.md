@@ -54,12 +54,13 @@ Mandatory reading order when working on a specific family:
 - **Verify Runtime**: Read the actual `.env` before making changes (no outdated assumptions).
 
 ### Pre-Commit/Push Checklist
-After committing and rebasing, run the Final Gate once on the final commit:
+- **Commit** (`pre-commit`, lint-staged): eslint --fix + prettier trên file staged, cộng test liên quan (`jest --findRelatedTests` / `vitest related`). Bypass khẩn cấp: `git commit --no-verify`.
+- **Push** (`pre-push`): chỉ `bun run type:check`. Bypass: `SKIP_TESTS=1`.
+- **Full test / build / check:ci**: chạy ở GitHub CI (pipeline từng repo), không chạy tự động ở local. Chạy tay khi cần: `bun run verify:final` (ERP) hoặc `bun run check:ci`.
 ```bash
 git commit
 git pull --rebase github-industries [target-branch]
-bun run verify:final
-git push github-industries [target-branch] --no-verify
+git push github-industries [target-branch]
 ```
 
 ---
@@ -108,8 +109,8 @@ Repo-level workflows (e.g. `erp/erp-web/.agents/workflows/standardize-drawer.md`
 ### Scenario 2: Committing & Pushing Code (ERP)
 1. Load `/erp-git-workflow` workflow.
 2. Ensure you're on `erp-master`.
-3. Commit with the fast pre-commit hook, then `git pull --rebase github-industries erp-master`.
-4. Run `bun run verify:final` once on the clean final commit, then push with `--no-verify`.
+3. Commit (pre-commit lint + test liên quan), then `git pull --rebase github-industries erp-master`.
+4. Push (pre-push type-check). Full test/build chạy trên GitHub CI sau khi push.
 
 ### Scenario 3: Building a Data Table (ERP Web)
 1. Load `/standardize-table` workflow.
@@ -174,7 +175,7 @@ Repo-level workflows (e.g. `erp/erp-web/.agents/workflows/standardize-drawer.md`
 - ❌ Don't leave ad-hoc `.ts` files at repo root (breaks `dist/` output structure)
 - ❌ Don't reference outdated docs (always verify with actual code state)
 - ❌ Don't mix database schemas, `.env`, or domain models between ERP and Klotus
-- ❌ Don't commit/push code without a passing `verify:final` on the final commit
+- ❌ Don't push code that fails `type:check` (pre-push) or whose CI run is red on GitHub
 
 ---
 
@@ -264,8 +265,9 @@ Source of truth for this repository (`./landing-page-api`).
 - Public endpoints: no auth guards required for public warranty endpoints.
 
 ### 4. Strict Pre-push Hook
-- Before running `git push`, you **MUST** run `bun run build`, `bun run check:ci`, and `bun run test`.
-- Do NOT push if any of these commands fail.
+- Commit: pre-commit tự chạy lint-staged (eslint, prettier, `jest --findRelatedTests` trên file staged).
+- Push: pre-push chạy `bun run type:check`. Do NOT push if it fails.
+- Full build / check:ci / test chạy trên GitHub CI.
 
 ### 5. Rebase First Conflict Resolution
 - When pulling or pushing code, your **first priority** is to use `git pull --rebase github-industries master`.
@@ -287,10 +289,7 @@ Source of truth for this repository (`./landing-page-api`).
 ## Git Workflow Mandates
 
 When asked to **commit code**, you MUST execute the following in order:
-1. `bun run build`
-2. `bun run check:ci`
-3. `bun run test`
-4. `git commit -m "<type>(<scope>): <message>"`
+1. `git commit -m "<type>(<scope>): <message>"` (pre-commit tự chạy lint-staged và `jest --findRelatedTests` trên file staged)
 
 When asked to **pull code**, you MUST execute the following in order:
 1. If there are uncommitted changes, save/commit them first.
@@ -299,9 +298,6 @@ When asked to **pull code**, you MUST execute the following in order:
 When asked to **push code**, you MUST execute the following in order:
 1. If there are uncommitted changes, save/commit them first.
 2. `git pull --rebase github-industries master` (and resolve conflicts if any)
-3. `bun run build`
-4. `bun run check:ci`
-5. `bun run test`
-6. `git push github-industries master`
+3. `git push github-industries master` (pre-push chạy `bun run type:check`; build/check:ci/test chạy trên GitHub CI)
 
 **Git Execution Context**: You MUST perform all Git operations exclusively inside the `landing-page-api` directory. NEVER run git commands from the workspace root.

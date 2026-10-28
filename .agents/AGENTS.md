@@ -34,8 +34,9 @@ Source of truth for this repository (`./landing-page-api`).
 - Public endpoints: no auth guards required for public warranty endpoints.
 
 ### 4. Strict Pre-push Hook
-- Before running `git push`, you **MUST** run `bun run build`, `bun run check:ci`, and `bun run test`.
-- Do NOT push if any of these commands fail.
+- Commit: pre-commit tự chạy lint-staged (eslint, prettier, `jest --findRelatedTests` trên file staged).
+- Push: pre-push chạy `bun run type:check`. Do NOT push if it fails.
+- Full build / check:ci / test chạy trên GitHub CI.
 
 ### 5. Rebase First Conflict Resolution
 - When pulling or pushing code, your **first priority** is to use `git pull --rebase github-industries master`.
@@ -57,10 +58,7 @@ Source of truth for this repository (`./landing-page-api`).
 ## Git Workflow Mandates
 
 When asked to **commit code**, you MUST execute the following in order:
-1. `bun run build`
-2. `bun run check:ci`
-3. `bun run test`
-4. `git commit -m "<type>(<scope>): <message>"`
+1. `git commit -m "<type>(<scope>): <message>"` (pre-commit tự chạy lint-staged và `jest --findRelatedTests` trên file staged)
 
 When asked to **pull code**, you MUST execute the following in order:
 1. If there are uncommitted changes, save/commit them first.
@@ -69,9 +67,6 @@ When asked to **pull code**, you MUST execute the following in order:
 When asked to **push code**, you MUST execute the following in order:
 1. If there are uncommitted changes, save/commit them first.
 2. `git pull --rebase github-industries master` (and resolve conflicts if any)
-3. `bun run build`
-4. `bun run check:ci`
-5. `bun run test`
-6. `git push github-industries master`
+3. `git push github-industries master` (pre-push chạy `bun run type:check`; build/check:ci/test chạy trên GitHub CI)
 
 **Git Execution Context**: You MUST perform all Git operations exclusively inside the `landing-page-api` directory. NEVER run git commands from the workspace root.
